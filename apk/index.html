@@ -38,7 +38,8 @@
       const subpath = splits.join('/');
       const appURL = `https://api.github.com/repos/${acc}/${repo}/contents/${subpath}`;
       const response = await fetch(appURL);
-      const data = await response.json().reverse();
+      const data = await response.json();
+      console.log(data);
       let template = document.getElementById('template').innerHTML;
 
       let htmlList = '';
