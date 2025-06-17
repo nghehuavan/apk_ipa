@@ -43,7 +43,8 @@
       let template = document.getElementById('template').innerHTML;
 
       let htmlList = '';
-      for (let file of data) {
+      const files = Array.from(data).reverse();
+      for (let file of files) {
         if (file.name == "index.html") continue;
         htmlList += template.replace('[link]', `${window.location.pathname}${file.name}`).replace('[text]', `${file.name}`);
       }
