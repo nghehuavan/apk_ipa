@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>APK Installer</title>
+  <!-- Link to Bootstrap 5 CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container mt-5" id="content">
+
+  </div>
+  <div class="d-none" id="template">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-body d-flex justify-content-center">
+            <a href="[link]" class="btn btn-primary">[text]</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS (optional, only if needed) -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.min.js"></script>
+
+  <script>
+    (async () => {
+      const host = window.location.hostname;
+      const acc = host.split('.')[0];
+      let splits = window.location.pathname.replace('/', '').split('/').filter((e) => e != "index.html");
+      const repo = splits.shift();
+      const subpath = splits.join('/');
+      const appURL = `https://api.github.com/repos/${acc}/${repo}/contents/${subpath}`;
+      const response = await fetch(appURL);
+      const data = await response.json();
+      console.log(data);
+      let template = document.getElementById('template').innerHTML;
+
+      let htmlList = '';
+      const files = Array.from(data).reverse();
+      for (let file of files) {
+        if (file.name == "index.html") continue;
+        htmlList += template.replace('[link]', `${window.location.pathname}${file.name}`).replace('[text]', `${file.name}`);
+      }
+      document.getElementById("content").innerHTML = '<h1 class="text-center">APK Installer</h1>' + htmlList;
+    })()
+  </script>
+
+</body>
+
+</html>
