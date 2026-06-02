@@ -31,25 +31,62 @@
 
   <script>
     (async () => {
-      const host = window.location.hostname;
-      const acc = host.split('.')[0];
-      let splits = window.location.pathname.replace('/', '').split('/').filter((e) => e != "index.html");
-      const repo = splits.shift();
-      const subpath = splits.join('/');
-      const appURL = `https://api.github.com/repos/${acc}/${repo}/contents/${subpath}`;
-      const response = await fetch(appURL);
-      const data = await response.json();
-      console.log(data);
-      let template = document.getElementById('template').innerHTML;
+      try {
+        const host = window.location.hostname;
+        const acc = host.split('.')[0];
+        
+        // Cleanly split the pathname and remove empty segments or 'index.html'
+        let splits = window.location.pathname.split('/').filter(e => e && e !== "index.html");
+        
+        if (splits.length < 1) {
+          throw new Error("Invalid path configuration");
+        }
 
-      let htmlList = '';
-      const files = Array.from(data).reverse();
-      for (let file of files) {
-        if (file.name == "index.html") continue;
-        htmlList += template.replace('[link]', `${window.location.pathname}${file.name}`).replace('[text]', `${file.name}`);
+        const repo = splits.shift();
+        const subpath = splits.join('/');
+        const appURL = `https://api.github.com/repos/${acc}/${repo}/contents/${subpath}`;
+        
+        const response = await fetch(appURL);
+        const data = await response.json();
+        console.log(data);
+        
+        let template = document.getElementById('template').innerHTML;
+        let htmlList = '';
+
+        if (Array.isArray(data)) {
+          const files = data.reverse();
+          
+          // Construct the base path for links safely
+          let basePath = window.location.pathname;
+          if (basePath.endsWith('index.html')) {
+            basePath = basePath.substring(0, basePath.length - 'index.html'.length);
+          }
+          if (!basePath.endsWith('/')) {
+            basePath += '/';
+          }
+
+          for (let file of files) {
+            // Only list .apk files
+            if (file.type === "file" && file.name.endsWith('.apk')) {
+              htmlList += template.replace('[link]', `${basePath}${file.name}`).replace('[text]', `${file.name}`);
+            }
+          }
+
+          if (htmlList === '') {
+            htmlList = '<p class="text-center mt-4">Không tìm thấy file APK nào.</p>';
+          }
+        } else {
+          // Handle non-array response (e.g., API rate limit exceeded)
+          console.error("GitHub API Error:", data);
+          htmlList = `<p class="text-center text-danger mt-4">Lỗi tải danh sách file: ${data.message || 'Lỗi không xác định'}. <br><small>Có thể do quá giới hạn truy cập API của GitHub (Rate Limit).</small></p>`;
+        }
+        
+        document.getElementById("content").innerHTML = '<h1 class="text-center">APK Installer</h1>' + htmlList;
+      } catch (err) {
+        console.error("Execution Error:", err);
+        document.getElementById("content").innerHTML = `<h1 class="text-center">APK Installer</h1><p class="text-center text-danger mt-4">Đã xảy ra lỗi: ${err.message}</p>`;
       }
-      document.getElementById("content").innerHTML = '<h1 class="text-center">APK Installer</h1>' + htmlList;
-    })()
+    })();
   </script>
 
 </body>
